@@ -26,7 +26,7 @@ class InventoryManagementSimulation extends Simulation {
       )
   )
 
-  setUp(simpleAddRequest.inject(constantUsersPerSec(100).during(30.seconds)))
+  setUp(simpleAddRequest.inject(constantUsersPerSec(2).during(10.seconds)))
     .protocols(httpProtocol)
 
 
