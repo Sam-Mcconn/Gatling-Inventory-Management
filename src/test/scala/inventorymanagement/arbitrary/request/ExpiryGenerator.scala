@@ -4,7 +4,7 @@ import org.scalacheck.Gen
 
 import java.time.YearMonth
 
-object Expiry extends TestGenerator[inventorymanagement.request.Expiry] {
+object ExpiryGenerator extends TestGenerator[inventorymanagement.request.Expiry] {
 
   private val MIN_YEAR = 2025
   private val MAX_YEAR = 2030
@@ -13,7 +13,7 @@ object Expiry extends TestGenerator[inventorymanagement.request.Expiry] {
   private val MAX_MONTH = 12
 
 
-  val generator: Gen[inventorymanagement.request.Expiry] = for {
+  override val generator: Gen[inventorymanagement.request.Expiry] = for {
     year <- uniformGen(MIN_YEAR, MAX_YEAR)
     month <- uniformGen(MIN_MONTH, MAX_MONTH)
     day <- uniformGen(1, YearMonth.of(year, month).lengthOfMonth())
