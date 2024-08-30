@@ -95,6 +95,7 @@ class InventoryManagementSimulation extends Simulation {
         .body(StringBody(session => session("body").as[String]))
     )
 
+  // @@@@@ THIS IS WHERE YOU DEFINE THE RATE AND DURATION OF THE TEST @@@@@
   setUp(request.inject(constantUsersPerSec(100).during(10.seconds)))
     .protocols(httpProtocol)
 
