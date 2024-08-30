@@ -8,7 +8,7 @@ import scala.util.Random
 
 object ItemGenerator extends TestGenerator[Item] {
 
-  private val MAX_QUANTITY = 10
+  private val MAX_QUANTITY = 4
   private val MIN_QUANTITY = 1
 
   private val NUM_EXPIRIES = 2
