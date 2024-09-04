@@ -96,7 +96,7 @@ class InventoryManagementSimulation extends Simulation {
     )
 
   // @@@@@ THIS IS WHERE YOU DEFINE THE RATE AND DURATION OF THE TEST @@@@@
-  setUp(request.inject(constantUsersPerSec(1000).during(30.seconds)))
+  setUp(request.inject(constantUsersPerSec(10000).during(60.seconds)))
     .protocols(httpProtocol)
 
   private def generateAddRequestBody: String = {
