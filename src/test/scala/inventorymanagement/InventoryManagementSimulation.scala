@@ -36,7 +36,7 @@ class InventoryManagementSimulation extends Simulation {
     override def next(): Map[String, String] = {
       math.abs(Random.nextInt()) % 100 match {
         // Emit an ADD request half of the time
-        case seed if seed < 50 =>
+        case seed if seed < 100 =>
           Map(
             "endpoint" -> "/add",
             "body" -> generateAddRequestBody
