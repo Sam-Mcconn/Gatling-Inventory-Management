@@ -1,10 +1,7 @@
 package inventorymanagement
 
-import inventorymanagement.arbitrary.request.{
-  AddRequestGenerator,
-  AllocateRequestGenerator
-}
-import inventorymanagement.request.{AllocateRequest, CollectRequest}
+import inventorymanagement.arbitrary.request.{AddRequestGenerator, AllocateRequestGenerator}
+import inventorymanagement.request.CollectRequest
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.gatling.core.Predef._
@@ -13,12 +10,16 @@ import io.gatling.core.structure.ScenarioBuilder
 import io.gatling.http.Predef._
 import io.gatling.http.protocol.HttpProtocolBuilder
 
-import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.AbstractIterator
 import scala.concurrent.duration.DurationInt
 import scala.util.Random
 
 class InventoryManagementSimulation extends Simulation {
+
+  // endpoints
+  private val ADD = "/add"
+  private val ALLOCATE = "/allocate"
+  private val COLLECT = "/collect"
 
   val httpProtocol: HttpProtocolBuilder =
     http
@@ -28,50 +29,29 @@ class InventoryManagementSimulation extends Simulation {
 
   val feeder: Feeder[String] = new AbstractIterator[Map[String, String]] {
 
-    private[this] val allocatedOrders =
-      new ConcurrentLinkedQueue[AllocateRequest]()
-
     override def hasNext: Boolean = true
 
     override def next(): Map[String, String] = {
       math.abs(Random.nextInt()) % 100 match {
-        // Emit an ADD request half of the time
-        case seed if seed < 100 =>
+        // Emit an ADD request two thirds of the time
+        case seed if seed < 67 =>
           Map(
-            "endpoint" -> "/add",
+            "endpoint" -> ADD,
             "body" -> generateAddRequestBody
           )
 
-        // Emit an ALLOCATE request a quarter of the time
-        case seed if seed < 75 =>
-          val allocateRequest = AllocateRequestGenerator.instance
-          allocatedOrders.add(allocateRequest)
-          Map(
-            "endpoint" -> "/allocate",
-            "body" -> allocateRequest.asJson.noSpaces
-          )
-
-        // Emit a COLLECT request in remaining cases
+        // Emit an ALLOCATE and COLLECT request a third of the time
         case _ =>
-          val allocation =
-            try {
-              allocatedOrders.remove()
-            } catch {
-              case _: NoSuchElementException =>
-                // If there are no allocated orders, just make a COLLECT request based on a non-existent ALLOCATE.
-                // The server should simply do nothing with this request
-                AllocateRequestGenerator.instance
-            }
-
-          val collect = CollectRequest(
-            allocation.locationId,
-            allocation.orderId,
-            allocation.items
+          val allocateRequest = AllocateRequestGenerator.instance
+          val collectRequest = CollectRequest(
+            allocateRequest.locationId,
+            allocateRequest.orderId,
+            allocateRequest.items
           )
-
           Map(
-            "endpoint" -> "/collect",
-            "body" -> collect.asJson.noSpaces
+            "endpoint" -> ALLOCATE,
+            "allocateBody" -> allocateRequest.asJson.noSpaces,
+            "collectBody" -> collectRequest.asJson.noSpaces
           )
       }
     }
@@ -79,20 +59,19 @@ class InventoryManagementSimulation extends Simulation {
 
   val request: ScenarioBuilder = scenario("Load Test Requests")
     .feed(feeder)
-    .doIf(session => session("endpoint").as[String] == "/add")(
+    .doIf(session => session("endpoint").as[String] == ADD)(
       http("ADD")
-        .post(session => session("endpoint").as[String])
+        .post(ADD)
         .body(StringBody(session => session("body").as[String]))
     )
-    .doIf(session => session("endpoint").as[String] == "/allocate")(
+    .doIf(session => session("endpoint").as[String] == ALLOCATE)(
       http("ALLOCATE")
-        .put(session => session("endpoint").as[String])
-        .body(StringBody(session => session("body").as[String]))
-    )
-    .doIf(session => session("endpoint").as[String] == "/collect")(
+        .put(ALLOCATE)
+        .body(StringBody(session => session("allocateBody").as[String])),
+      pause(10, 20),
       http("COLLECT")
-        .delete(session => session("endpoint").as[String])
-        .body(StringBody(session => session("body").as[String]))
+        .delete(COLLECT)
+        .body(StringBody(session => session("collectBody").as[String]))
     )
 
   // @@@@@ THIS IS WHERE YOU DEFINE THE RATE AND DURATION OF THE TEST @@@@@
