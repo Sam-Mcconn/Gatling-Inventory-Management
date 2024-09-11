@@ -2,6 +2,8 @@ enablePlugins(GatlingPlugin)
 
 scalaVersion := "2.13.14"
 
+Gatling / enterpriseApiToken := "aFSFyhtH.7vrtnKORGMCb_2XuEOQ-Z1UC9XHQ3_hl54Ig68iULLH5lNNvypCZia7d"
+
 scalacOptions := Seq(
   "-encoding", "UTF-8", "-release:8", "-deprecation",
   "-feature", "-unchecked", "-language:implicitConversions", "-language:postfixOps")
